@@ -1,0 +1,8 @@
+name = "platform-dispatcher"
+main = "index.js"
+compatibility_date = "2024-12-12"
+
+# Bind to your dispatch namespace
+[[dispatch_namespaces]]
+binding = "DISPATCHER"
+namespace = "testing-app"

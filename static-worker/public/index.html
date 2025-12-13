@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RideShare - Demo App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #141414;
+      --bg-tertiary: #1a1a1a;
+      --border: rgba(255, 255, 255, 0.08);
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --yellow: #fbbf24;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --red: #ef4444;
+      --orange: #f97316;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--blue));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .logo-text {
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .api-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--bg-tertiary);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    /* Main Layout */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 2rem;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: sticky;
+      top: 100px;
+      height: fit-content;
+    }
+
+    .nav-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .nav-section-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      padding-left: 0.75rem;
+    }
+
+    .nav-button {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: all 0.2s;
+      margin-bottom: 0.25rem;
+    }
+
+    .nav-button:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-button.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .nav-icon {
+      font-size: 1.1rem;
+    }
+
+    /* Main Content */
+    .main-content {
+      min-height: calc(100vh - 200px);
+    }
+
+    .section {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-header {
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-description {
+      color: var(--text-secondary);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-get { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
+    .badge-post { background: rgba(16, 185, 129, 0.15); color: var(--accent); }
+    .badge-put { background: rgba(251, 191, 36, 0.15); color: var(--yellow); }
+    .badge-delete { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Response Display */
+    .response-container {
+      margin-top: 1.5rem;
+    }
+
+    .response-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .response-status {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.75rem;
+      border-radius: 6px;
+    }
+
+    .response-status.success {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent);
+    }
+
+    .response-status.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+    }
+
+    .response-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .response-body {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .response-body pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .stat-icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* Data Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 0.875rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table th {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .data-table td {
+      font-size: 0.875rem;
+    }
+
+    .data-table tr:hover td {
+      background: var(--bg-tertiary);
+    }
+
+    /* Status Badges */
+    .status-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+    }
+
+    .status-requested { background: rgba(251, 191, 36, 0.15); color: var(--yellow); }
+    .status-accepted { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
+    .status-in_progress { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
+    .status-completed { background: rgba(16, 185, 129, 0.15); color: var(--accent); }
+    .status-cancelled { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+
+    /* Rating Stars */
+    .rating {
+      color: var(--yellow);
+      font-size: 0.9rem;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .quick-action {
+      padding: 0.5rem 1rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quick-action:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Map Placeholder */
+    .map-placeholder {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 1000;
+    }
+
+    .toast {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .toast-success { border-left: 3px solid var(--accent); }
+    .toast-error { border-left: 3px solid var(--red); }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+      
+      .sidebar {
+        position: static;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      
+      .nav-section {
+        display: contents;
+      }
+      
+      .nav-section-title {
+        display: none;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">🚗</div>
+        <span class="logo-text">RideShare</span>
+      </div>
+      <div class="api-url" id="apiUrl">https://platform-dispatcher.embitious.workers.dev/worker</div>
+    </div>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <div class="nav-section">
+        <div class="nav-section-title">Overview</div>
+        <button class="nav-button active" data-section="dashboard">
+          <span class="nav-icon">📊</span> Dashboard
+        </button>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">Management</div>
+        <button class="nav-button" data-section="users">
+          <span class="nav-icon">👤</span> Users
+        </button>
+        <button class="nav-button" data-section="vehicles">
+          <span class="nav-icon">🚙</span> Vehicles
+        </button>
+        <button class="nav-button" data-section="rides">
+          <span class="nav-icon">🛣️</span> Rides
+        </button>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">Operations</div>
+        <button class="nav-button" data-section="drivers">
+          <span class="nav-icon">📍</span> Find Drivers
+        </button>
+        <button class="nav-button" data-section="ratings">
+          <span class="nav-icon">⭐</span> Ratings
+        </button>
+        <button class="nav-button" data-section="payments">
+          <span class="nav-icon">💳</span> Payments
+        </button>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">API</div>
+        <button class="nav-button" data-section="api-tester">
+          <span class="nav-icon">🔧</span> API Tester
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <!-- Dashboard Section -->
+      <section id="dashboard" class="section active">
+        <div class="section-header">
+          <h1 class="section-title">Dashboard</h1>
+          <p class="section-description">Overview of your ride-sharing platform</p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-icon">👤</div>
+            <div class="stat-value" id="statUsers">-</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🚗</div>
+            <div class="stat-value" id="statRides">-</div>
+            <div class="stat-label">Total Rides</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="statCompleted">-</div>
+            <div class="stat-label">Completed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-value" id="statRevenue">-</div>
+            <div class="stat-label">Revenue</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Recent Rides</h3>
+            <button class="btn btn-secondary" onclick="loadRecentRides()">Refresh</button>
+          </div>
+          <table class="data-table" id="recentRidesTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Rider</th>
+                <th>From → To</th>
+                <th>Status</th>
+                <th>Fare</th>
+              </tr>
+            </thead>
+            <tbody id="recentRidesBody">
+              <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Users Section -->
+      <section id="users" class="section">
+        <div class="section-header">
+          <h1 class="section-title">Users</h1>
+          <p class="section-description">Manage riders and drivers</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Create User</h3>
+            <span class="badge badge-post">POST</span>
+          </div>
+          <form id="createUserForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" name="full_name" placeholder="John Doe" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" name="email" placeholder="john@example.com" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="text" class="form-input" name="phone" placeholder="+1234567890" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">User Type</label>
+                <select class="form-select" name="user_type">
+                  <option value="rider">Rider</option>
+                  <option value="driver">Driver</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Create User</button>
+          </form>
+          <div class="response-container" id="createUserResponse"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">All Users</h3>
+            <span class="badge badge-get">GET</span>
+          </div>
+          <button class="btn btn-primary" onclick="fetchUsers()">Load Users</button>
+          <div class="response-container" id="usersResponse"></div>
+        </div>
+      </section>
+
+      <!-- Vehicles Section -->
+      <section id="vehicles" class="section">
+        <div class="section-header">
+          <h1 class="section-title">Vehicles</h1>
+          <p class="section-description">Manage driver vehicles</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Add Vehicle</h3>
+            <span class="badge badge-post">POST</span>
+          </div>
+          <form id="addVehicleForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Driver ID</label>
+                <input type="number" class="form-input" name="driver_id" placeholder="2" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Vehicle Type</label>
+                <select class="form-select" name="vehicle_type">
+                  <option value="economy">Economy</option>
+                  <option value="comfort">Comfort</option>
+                  <option value="premium">Premium</option>
+                  <option value="xl">XL</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Make</label>
+                <input type="text" class="form-input" name="make" placeholder="Toyota" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Model</label>
+                <input type="text" class="form-input" name="model" placeholder="Camry" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Year</label>
+                <input type="number" class="form-input" name="year" placeholder="2023">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Color</label>
+                <input type="text" class="form-input" name="color" placeholder="Silver">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">License Plate</label>
+                <input type="text" class="form-input" name="license_plate" placeholder="ABC-1234" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Seats</label>
+                <input type="number" class="form-input" name="seats" placeholder="4" value="4">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Vehicle</button>
+          </form>
+          <div class="response-container" id="addVehicleResponse"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">All Vehicles</h3>
+            <span class="badge badge-get">GET</span>
+          </div>
+          <button class="btn btn-primary" onclick="fetchVehicles()">Load Vehicles</button>
+          <div class="response-container" id="vehiclesResponse"></div>
+        </div>
+      </section>
+
+      <!-- Rides Section -->
+      <section id="rides" class="section">
+        <div class="section-header">
+          <h1 class="section-title">Rides</h1>
+          <p class="section-description">Request and manage rides</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Request a Ride</h3>
+            <span class="badge badge-post">POST</span>
+          </div>
+          <form id="requestRideForm">
+            <div class="form-group">
+              <label class="form-label">Rider ID</label>
+              <input type="number" class="form-input" name="rider_id" placeholder="1" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Pickup Latitude</label>
+                <input type="number" step="any" class="form-input" name="pickup_lat" placeholder="37.7749" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Pickup Longitude</label>
+                <input type="number" step="any" class="form-input" name="pickup_lng" placeholder="-122.4194" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pickup Address</label>
+              <input type="text" class="form-input" name="pickup_address" placeholder="123 Market St, San Francisco">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Dropoff Latitude</label>
+                <input type="number" step="any" class="form-input" name="dropoff_lat" placeholder="37.7849" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Dropoff Longitude</label>
+                <input type="number" step="any" class="form-input" name="dropoff_lng" placeholder="-122.4094" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Dropoff Address</label>
+                <input type="text" class="form-input" name="dropoff_address" placeholder="456 Mission St, San Francisco">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Estimated Fare ($)</label>
+                <input type="number" step="0.01" class="form-input" name="estimated_fare" placeholder="15.00">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Request Ride</button>
+          </form>
+          <div class="response-container" id="requestRideResponse"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Ride Actions</h3>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Ride ID</label>
+              <input type="number" class="form-input" id="rideActionId" placeholder="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Driver ID (for accept)</label>
+              <input type="number" class="form-input" id="rideActionDriverId" placeholder="2">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vehicle ID (for accept)</label>
+            <input type="number" class="form-input" id="rideActionVehicleId" placeholder="1">
+          </div>
+          <div class="quick-actions">
+            <button class="btn btn-secondary" onclick="acceptRide()">✓ Accept</button>
+            <button class="btn btn-secondary" onclick="startRide()">▶ Start</button>
+            <button class="btn btn-secondary" onclick="completeRide()">✔ Complete</button>
+          </div>
+          <div class="response-container" id="rideActionResponse"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">All Rides</h3>
+            <span class="badge badge-get">GET</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Filter by Status</label>
+            <select class="form-select" id="ridesStatusFilter">
+              <option value="">All</option>
+              <option value="requested">Requested</option>
+              <option value="accepted">Accepted</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="fetchRides()">Load Rides</button>
+          <div class="response-container" id="ridesResponse"></div>
+        </div>
+      </section>
+
+      <!-- Drivers Section -->
+      <section id="drivers" class="section">
+        <div class="section-header">
+          <h1 class="section-title">Find Nearby Drivers</h1>
+          <p class="section-description">Locate available drivers near a location</p>
+        </div>
+
+        <div class="map-placeholder">
+          <span>🗺️ Map Integration Coming Soon</span>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Search Nearby Drivers</h3>
+            <span class="badge badge-get">GET</span>
+          </div>
+          <form id="findDriversForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Latitude</label>
+                <input type="number" step="any" class="form-input" name="lat" placeholder="37.7749" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Longitude</label>
+                <input type="number" step="any" class="form-input" name="lng" placeholder="-122.4194" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Radius (km)</label>
+              <input type="number" class="form-input" name="radius" placeholder="5" value="5">
+            </div>
+            <button type="submit" class="btn btn-primary">Find Drivers</button>
+          </form>
+          <div class="quick-actions">
+            <button class="quick-action" onclick="setLocation(37.7749, -122.4194)">📍 San Francisco</button>
+            <button class="quick-action" onclick="setLocation(34.0522, -118.2437)">📍 Los Angeles</button>
+            <button class="quick-action" onclick="setLocation(40.7128, -74.0060)">📍 New York</button>
+          </div>
+          <div class="response-container" id="findDriversResponse"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Update Driver Location</h3>
+            <span class="badge badge-put">PUT</span>
+          </div>
+          <form id="updateLocationForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Driver ID</label>
+                <input type="number" class="form-input" name="driver_id" placeholder="2" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Heading (degrees)</label>
+                <input type="number" class="form-input" name="heading" placeholder="90">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Latitude</label>
+                <input type="number" step="any" class="form-input" name="lat" placeholder="37.7749" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Longitude</label>
+                <input type="number" step="any" class="form-input" name="lng" placeholder="-122.4194" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Online</label>
+                <select class="form-select" name="is_online">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Available</label>
+                <select class="form-select" name="is_available">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Location</button>
+          </form>
+          <div class="response-container" id="updateLocationResponse"></div>
+        </div>
+      </section>
+
+      <!-- Ratings Section -->
+      <section id="ratings" class="section">
+        <div class="section-header">
+          <h1 class="section-title">Ratings</h1>
+          <p class="section-description">Submit and view ride ratings</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Submit Rating</h3>
+            <span class="badge badge-post">POST</span>
+          </div>
+          <form id="submitRatingForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Ride ID</label>
+                <input type="number" class="form-input" name="ride_id" placeholder="1" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rating (1-5)</label>
+                <select class="form-select" name="rating" required>
+                  <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                  <option value="4">⭐⭐⭐⭐ (4)</option>
+                  <option value="3">⭐⭐⭐ (3)</option>
+                  <option value="2">⭐⭐ (2)</option>
+                  <option value="1">⭐ (1)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">From User ID</label>
+                <input type="number" class="form-input" name="from_user_id" placeholder="1" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">To User ID</label>
+                <input type="number" class="form-input" name="to_user_id" placeholder="2" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Comment</label>
+              <textarea class="form-textarea" name="comment" placeholder="Great ride! Very professional driver."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Rating</button>
+          </form>
+          <div class="response-container" id="submitRatingResponse"></div>
+        </div>
+      </section>
+
+      <!-- Payments Section -->
+      <section id="payments" class="section">
+        <div class="section-header">
+          <h1 class="section-title">Payments</h1>
+          <p class="section-description">Process ride payments</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Process Payment</h3>
+            <span class="badge badge-post">POST</span>
+          </div>
+          <form id="processPaymentForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Ride ID</label>
+                <input type="number" class="form-input" name="ride_id" placeholder="1" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rider ID</label>
+                <input type="number" class="form-input" name="rider_id" placeholder="1" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Amount ($)</label>
+                <input type="number" step="0.01" class="form-input" name="amount" placeholder="25.00" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Payment Method</label>
+                <select class="form-select" name="payment_method">
+                  <option value="card">💳 Card</option>
+                  <option value="cash">💵 Cash</option>
+                  <option value="wallet">👛 Wallet</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Process Payment</button>
+          </form>
+          <div class="response-container" id="processPaymentResponse"></div>
+        </div>
+      </section>
+
+      <!-- API Tester Section -->
+      <section id="api-tester" class="section">
+        <div class="section-header">
+          <h1 class="section-title">API Tester</h1>
+          <p class="section-description">Make custom API requests</p>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Custom Request</h3>
+          </div>
+          <form id="apiTesterForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Method</label>
+                <select class="form-select" name="method" id="apiMethod">
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="DELETE">DELETE</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Endpoint</label>
+                <input type="text" class="form-input" name="endpoint" id="apiEndpoint" placeholder="/users" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Request Body (JSON)</label>
+              <textarea class="form-textarea" name="body" id="apiBody" placeholder='{"key": "value"}'></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Send Request</button>
+          </form>
+          
+          <div class="quick-actions" style="margin-top: 1rem;">
+            <span style="color: var(--text-muted); font-size: 0.8rem; margin-right: 0.5rem;">Quick:</span>
+            <button class="quick-action" onclick="setApiRequest('GET', '/users')">GET /users</button>
+            <button class="quick-action" onclick="setApiRequest('GET', '/vehicles')">GET /vehicles</button>
+            <button class="quick-action" onclick="setApiRequest('GET', '/rides')">GET /rides</button>
+            <button class="quick-action" onclick="setApiRequest('GET', '/stats')">GET /stats</button>
+            <button class="quick-action" onclick="setApiRequest('GET', '/')">GET / (API Info)</button>
+          </div>
+          
+          <div class="response-container" id="apiTesterResponse"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // Configuration
+    const API_BASE = 'https://platform-dispatcher.embitious.workers.dev/share-rider-app';
+
+    // Navigation
+    document.querySelectorAll('.nav-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.section).classList.add('active');
+      });
+    });
+
+    // Toast notifications
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `<span>${type === 'success' ? '✓' : '✕'}</span> ${message}`;
+      document.getElementById('toastContainer').appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // API Request helper
+    async function apiRequest(endpoint, options = {}) {
+      const startTime = Date.now();
+      try {
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+          headers: { 'Content-Type': 'application/json' },
+          ...options,
+        });
+        const data = await response.json();
+        const duration = Date.now() - startTime;
+        return { success: response.ok, data, status: response.status, duration };
+      } catch (error) {
+        return { success: false, data: { error: error.message }, status: 0, duration: Date.now() - startTime };
+      }
+    }
+
+    // Display response
+    function displayResponse(containerId, result) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = `
+        <div class="response-header">
+          <span class="response-status ${result.success ? 'success' : 'error'}">
+            ${result.success ? 'Success' : 'Error'} ${result.status}
+          </span>
+          <span class="response-time">${result.duration}ms</span>
+        </div>
+        <div class="response-body">
+          <pre>${JSON.stringify(result.data, null, 2)}</pre>
+        </div>
+      `;
+    }
+
+    // Dashboard
+    async function loadDashboard() {
+      const stats = await apiRequest('/stats');
+      if (stats.success && stats.data.data) {
+        const { users, rides, revenue } = stats.data.data;
+        
+        let totalUsers = 0;
+        users.forEach(u => totalUsers += u.count);
+        document.getElementById('statUsers').textContent = totalUsers;
+
+        let totalRides = 0, completedRides = 0;
+        rides.forEach(r => {
+          totalRides += r.count;
+          if (r.status === 'completed') completedRides = r.count;
+        });
+        document.getElementById('statRides').textContent = totalRides;
+        document.getElementById('statCompleted').textContent = completedRides;
+        document.getElementById('statRevenue').textContent = revenue?.total ? `$${revenue.total.toFixed(2)}` : '$0';
+      }
+      loadRecentRides();
+    }
+
+    async function loadRecentRides() {
+      const result = await apiRequest('/rides');
+      const tbody = document.getElementById('recentRidesBody');
+      if (result.success && result.data.data) {
+        tbody.innerHTML = result.data.data.slice(0, 5).map(ride => `
+          <tr>
+            <td>#${ride.id}</td>
+            <td>${ride.rider_name || 'Unknown'}</td>
+            <td style="font-size: 0.8rem;">${ride.pickup_address || '-'} → ${ride.dropoff_address || '-'}</td>
+            <td><span class="status-badge status-${ride.status}">${ride.status}</span></td>
+            <td>$${ride.actual_fare || ride.estimated_fare || '-'}</td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No rides found</td></tr>';
+      }
+    }
+
+    // Users
+    document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      const result = await apiRequest('/users', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      displayResponse('createUserResponse', result);
+      if (result.success) {
+        showToast('User created successfully!');
+        e.target.reset();
+      }
+    });
+
+    async function fetchUsers() {
+      const result = await apiRequest('/users');
+      displayResponse('usersResponse', result);
+    }
+
+    // Vehicles
+    document.getElementById('addVehicleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      data.driver_id = parseInt(data.driver_id);
+      data.year = parseInt(data.year) || null;
+      data.seats = parseInt(data.seats) || 4;
+      const result = await apiRequest('/vehicles', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      displayResponse('addVehicleResponse', result);
+      if (result.success) {
+        showToast('Vehicle added successfully!');
+        e.target.reset();
+      }
+    });
+
+    async function fetchVehicles() {
+      const result = await apiRequest('/vehicles');
+      displayResponse('vehiclesResponse', result);
+    }
+
+    // Rides
+    document.getElementById('requestRideForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      data.rider_id = parseInt(data.rider_id);
+      data.pickup_lat = parseFloat(data.pickup_lat);
+      data.pickup_lng = parseFloat(data.pickup_lng);
+      data.dropoff_lat = parseFloat(data.dropoff_lat);
+      data.dropoff_lng = parseFloat(data.dropoff_lng);
+      data.estimated_fare = parseFloat(data.estimated_fare) || null;
+      const result = await apiRequest('/rides', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      displayResponse('requestRideResponse', result);
+      if (result.success) showToast('Ride requested!');
+    });
+
+    async function acceptRide() {
+      const rideId = document.getElementById('rideActionId').value;
+      const driverId = document.getElementById('rideActionDriverId').value;
+      const vehicleId = document.getElementById('rideActionVehicleId').value;
+      if (!rideId || !driverId || !vehicleId) {
+        showToast('Please fill in all fields', 'error');
+        return;
+      }
+      const result = await apiRequest(`/rides/${rideId}/accept`, {
+        method: 'PUT',
+        body: JSON.stringify({ driver_id: parseInt(driverId), vehicle_id: parseInt(vehicleId) }),
+      });
+      displayResponse('rideActionResponse', result);
+      if (result.success) showToast('Ride accepted!');
+    }
+
+    async function startRide() {
+      const rideId = document.getElementById('rideActionId').value;
+      if (!rideId) { showToast('Please enter Ride ID', 'error'); return; }
+      const result = await apiRequest(`/rides/${rideId}/start`, { method: 'PUT' });
+      displayResponse('rideActionResponse', result);
+      if (result.success) showToast('Ride started!');
+    }
+
+    async function completeRide() {
+      const rideId = document.getElementById('rideActionId').value;
+      if (!rideId) { showToast('Please enter Ride ID', 'error'); return; }
+      const result = await apiRequest(`/rides/${rideId}/complete`, {
+        method: 'PUT',
+        body: JSON.stringify({ actual_fare: 25.00, distance_km: 5.5, duration_minutes: 15 }),
+      });
+      displayResponse('rideActionResponse', result);
+      if (result.success) showToast('Ride completed!');
+    }
+
+    async function fetchRides() {
+      const status = document.getElementById('ridesStatusFilter').value;
+      const endpoint = status ? `/rides?status=${status}` : '/rides';
+      const result = await apiRequest(endpoint);
+      displayResponse('ridesResponse', result);
+    }
+
+    // Drivers
+    document.getElementById('findDriversForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const lat = formData.get('lat');
+      const lng = formData.get('lng');
+      const radius = formData.get('radius') || 5;
+      const result = await apiRequest(`/drivers/nearby?lat=${lat}&lng=${lng}&radius=${radius}`);
+      displayResponse('findDriversResponse', result);
+    });
+
+    function setLocation(lat, lng) {
+      document.querySelector('#findDriversForm [name="lat"]').value = lat;
+      document.querySelector('#findDriversForm [name="lng"]').value = lng;
+    }
+
+    document.getElementById('updateLocationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const driverId = formData.get('driver_id');
+      const data = {
+        lat: parseFloat(formData.get('lat')),
+        lng: parseFloat(formData.get('lng')),
+        heading: parseFloat(formData.get('heading')) || 0,
+        is_online: formData.get('is_online') === 'true',
+        is_available: formData.get('is_available') === 'true',
+      };
+      const result = await apiRequest(`/drivers/${driverId}/location`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      displayResponse('updateLocationResponse', result);
+      if (result.success) showToast('Location updated!');
+    });
+
+    // Ratings
+    document.getElementById('submitRatingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = {
+        ride_id: parseInt(formData.get('ride_id')),
+        from_user_id: parseInt(formData.get('from_user_id')),
+        to_user_id: parseInt(formData.get('to_user_id')),
+        rating: parseInt(formData.get('rating')),
+        comment: formData.get('comment'),
+      };
+      const result = await apiRequest('/ratings', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      displayResponse('submitRatingResponse', result);
+      if (result.success) {
+        showToast('Rating submitted!');
+        e.target.reset();
+      }
+    });
+
+    // Payments
+    document.getElementById('processPaymentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = {
+        ride_id: parseInt(formData.get('ride_id')),
+        rider_id: parseInt(formData.get('rider_id')),
+        amount: parseFloat(formData.get('amount')),
+        payment_method: formData.get('payment_method'),
+      };
+      const result = await apiRequest('/payments', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      displayResponse('processPaymentResponse', result);
+      if (result.success) showToast('Payment processed!');
+    });
+
+    // API Tester
+    function setApiRequest(method, endpoint, body = '') {
+      document.getElementById('apiMethod').value = method;
+      document.getElementById('apiEndpoint').value = endpoint;
+      document.getElementById('apiBody').value = body;
+    }
+
+    document.getElementById('apiTesterForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const method = document.getElementById('apiMethod').value;
+      const endpoint = document.getElementById('apiEndpoint').value;
+      const body = document.getElementById('apiBody').value;
+      
+      const options = { method };
+      if (body && method !== 'GET') {
+        try {
+          options.body = JSON.stringify(JSON.parse(body));
+        } catch {
+          options.body = body;
+        }
+      }
+      
+      const result = await apiRequest(endpoint, options);
+      displayResponse('apiTesterResponse', result);
+    });
+
+    // Initialize
+    loadDashboard();
+  </script>
+</body>
+</html>
+
