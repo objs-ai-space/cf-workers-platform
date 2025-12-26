@@ -1,0 +1,22 @@
+name = "universal-dispatcher"
+main = "index.js"
+compatibility_date = "2024-12-26"
+account_id = "33c782e95366c69c5d3b4317c14a7441"
+
+# Bind ALL your namespaces here with unique binding names
+# The binding name (e.g., NS_TESTING_APP) is used in the code
+# The namespace is the actual namespace name in Cloudflare
+
+[[dispatch_namespaces]]
+binding = "NS_TESTING_APP"
+namespace = "testing-app"
+
+[[dispatch_namespaces]]
+binding = "NS_DEVA_TEST"
+namespace = "deva test"
+
+# Add more namespaces as you create them:
+# [[dispatch_namespaces]]
+# binding = "NS_MY_NEW_NAMESPACE"
+# namespace = "my-new-namespace"
+

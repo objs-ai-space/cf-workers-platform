@@ -27,6 +27,21 @@ interface Namespace {
   namespace_name: string;
 }
 
+// Universal dispatcher URL - works for ALL namespaces
+// URL Pattern: https://universal-dispatcher.embitious.workers.dev/{namespace}/{script}/...
+const UNIVERSAL_DISPATCHER_URL = "https://universal-dispatcher.embitious.workers.dev";
+
+// Convert namespace name to URL-safe format (spaces to dashes, lowercase)
+const toUrlSafeNamespace = (namespace: string): string => {
+  return namespace.toLowerCase().replace(/\s+/g, '-');
+};
+
+// Build dispatcher URL for a specific namespace and script
+const getDispatcherUrl = (namespace: string, scriptName: string): string => {
+  const urlSafeNamespace = toUrlSafeNamespace(namespace);
+  return `${UNIVERSAL_DISPATCHER_URL}/${urlSafeNamespace}/${scriptName}`;
+};
+
 interface AppSpec {
   appName: string;
   description: string;
@@ -270,7 +285,8 @@ export default function AIBuilder({ namespaces, onDeployComplete }: AIBuilderPro
         throw new Error("Failed to analyze request. Please try rephrasing.");
       }
 
-      const apiBaseUrl = `https://platform-dispatcher.embitious.workers.dev/${parsedSpec.appName}`;
+      const apiBaseUrl = getDispatcherUrl(selectedNamespace, parsedSpec.appName);
+      console.log("Using universal dispatcher URL:", apiBaseUrl);
 
       // Step 2: Generate Schema FIRST (foundation)
       setStep("schema");
@@ -358,10 +374,16 @@ export default function AIBuilder({ namespaces, onDeployComplete }: AIBuilderPro
     const currentSchemaSQL = schemaSQLRef.current || schemaSQL;
     const currentUIHTML = uiHTMLRef.current || uiHTML;
     
-    console.log("Deploy check - spec:", !!spec);
-    console.log("- workerCode (ref/state):", workerCodeRef.current?.length, "/", workerCode?.length);
-    console.log("- schemaSQL (ref/state):", schemaSQLRef.current?.length, "/", schemaSQL?.length);
-    console.log("- uiHTML (ref/state):", uiHTMLRef.current?.length, "/", uiHTML?.length);
+    console.log("========================================");
+    console.log("🚀 DEPLOYMENT STARTED");
+    console.log("========================================");
+    console.log("📋 Deploy Configuration:");
+    console.log("  - Selected Namespace:", selectedNamespace);
+    console.log("  - App Name:", spec?.appName);
+    console.log("  - Spec exists:", !!spec);
+    console.log("  - Worker code length (ref/state):", workerCodeRef.current?.length, "/", workerCode?.length);
+    console.log("  - Schema SQL length (ref/state):", schemaSQLRef.current?.length, "/", schemaSQL?.length);
+    console.log("  - UI HTML length (ref/state):", uiHTMLRef.current?.length, "/", uiHTML?.length);
     
     const missing: string[] = [];
     if (!spec) missing.push("spec");
@@ -370,6 +392,7 @@ export default function AIBuilder({ namespaces, onDeployComplete }: AIBuilderPro
     if (!currentUIHTML || currentUIHTML.trim().length === 0) missing.push("uiHTML");
     
     if (missing.length > 0 || !spec) {
+      console.error("❌ Missing required data:", missing);
       setError(`Missing generated code: ${missing.join(", ")}`);
       return;
     }
@@ -387,40 +410,63 @@ export default function AIBuilder({ namespaces, onDeployComplete }: AIBuilderPro
       setDeployError(null);
 
       // 1. Create D1 database
+      console.log("\n📦 STEP 1: Creating D1 Database");
+      const dbName = `${appName}-db-${Date.now()}`;
+      console.log("  - Database name:", dbName);
+      
       const dbResponse = await fetch("/api/databases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: `${appName}-db-${Date.now()}` }),
+        body: JSON.stringify({ name: dbName }),
       });
 
+      const dbResult = await dbResponse.json();
+      console.log("  - Response status:", dbResponse.status);
+      console.log("  - Response data:", JSON.stringify(dbResult, null, 2));
+
       if (!dbResponse.ok) {
-        const data = await dbResponse.json();
-        throw new Error(`Database creation failed: ${data.error || "Unknown error"}`);
+        throw new Error(`Database creation failed: ${dbResult.error || "Unknown error"}`);
       }
 
-      const dbResult = await dbResponse.json();
       const databaseId = dbResult.uuid;
+      console.log("  ✅ Database created with ID:", databaseId);
 
       // 2. Execute schema on the database
+      console.log("\n📝 STEP 2: Executing Schema SQL");
       const statements = deploySchemaSQL
         .split(";")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
+      
+      console.log("  - Total SQL statements:", statements.length);
 
-      for (const sql of statements) {
+      for (let i = 0; i < statements.length; i++) {
+        const sql = statements[i];
+        console.log(`  - Executing statement ${i + 1}/${statements.length}:`, sql.substring(0, 60) + "...");
+        
         const queryResponse = await fetch(`/api/databases/${databaseId}/query`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sql: sql + ";" }),
         });
         
+        const queryResult = await queryResponse.json();
+        console.log(`    - Status: ${queryResponse.status}, Success: ${queryResponse.ok}`);
+        
         if (!queryResponse.ok) {
-          const data = await queryResponse.json();
-          throw new Error(`Schema execution failed: ${data.error || sql.substring(0, 50)}`);
+          console.error("    - Query error:", queryResult);
+          throw new Error(`Schema execution failed: ${queryResult.error || sql.substring(0, 50)}`);
         }
       }
+      console.log("  ✅ All schema statements executed successfully");
 
-      // 3. Deploy Worker
+      // 3. Deploy Worker (API backend)
+      console.log("\n⚙️ STEP 3: Deploying Worker API");
+      console.log("  - Script name:", appName);
+      console.log("  - Target namespace:", selectedNamespace);
+      console.log("  - Worker code length:", deployWorkerCode.length, "chars");
+      console.log("  - API URL:", `/api/namespaces/${selectedNamespace}/scripts`);
+      
       const workerFormData = new FormData();
       workerFormData.append("scriptName", appName);
       workerFormData.append("script", deployWorkerCode);
@@ -431,26 +477,48 @@ export default function AIBuilder({ namespaces, onDeployComplete }: AIBuilderPro
         body: workerFormData,
       });
 
+      const workerResult = await workerResponse.json();
+      console.log("  - Response status:", workerResponse.status);
+      console.log("  - Response data:", JSON.stringify(workerResult, null, 2));
+
       if (!workerResponse.ok) {
-        const data = await workerResponse.json();
-        throw new Error(`Worker deployment failed: ${data.error || "Unknown error"}`);
+        throw new Error(`Worker deployment failed: ${workerResult.error || "Unknown error"}`);
       }
+      console.log("  ✅ Worker API deployed successfully");
 
       // 4. Add D1 binding to worker
+      console.log("\n🔗 STEP 4: Adding D1 Binding to Worker");
+      console.log("  - Binding name: DB");
+      console.log("  - Database ID:", databaseId);
+      console.log("  - API URL:", `/api/namespaces/${selectedNamespace}/scripts/${appName}/settings`);
+      
+      const bindingPayload = {
+        bindings: [{ name: "DB", type: "d1", id: databaseId }],
+      };
+      console.log("  - Binding payload:", JSON.stringify(bindingPayload, null, 2));
+      
       const bindingResponse = await fetch(`/api/namespaces/${selectedNamespace}/scripts/${appName}/settings`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bindings: [{ name: "DB", type: "d1", id: databaseId }],
-        }),
+        body: JSON.stringify(bindingPayload),
       });
 
+      const bindingResult = await bindingResponse.json();
+      console.log("  - Response status:", bindingResponse.status);
+      console.log("  - Response data:", JSON.stringify(bindingResult, null, 2));
+
       if (!bindingResponse.ok) {
-        const data = await bindingResponse.json();
-        throw new Error(`Binding failed: ${data.error || "Unknown error"}`);
+        throw new Error(`Binding failed: ${bindingResult.error || "Unknown error"}`);
       }
+      console.log("  ✅ D1 binding added successfully");
 
       // 5. Deploy UI as static site worker
+      console.log("\n🎨 STEP 5: Deploying UI Worker");
+      const uiScriptName = `${appName}-ui`;
+      console.log("  - UI Script name:", uiScriptName);
+      console.log("  - Target namespace:", selectedNamespace);
+      console.log("  - HTML content length:", deployUIHTML.length, "chars");
+      
       const uiWorkerCode = `
 // Static Site Worker - Generated by AI Builder
 const HTML_CONTENT = ${JSON.stringify(deployUIHTML)};
@@ -484,8 +552,10 @@ export default {
 };
 `.trim();
 
+      console.log("  - UI worker code length:", uiWorkerCode.length, "chars");
+
       const uiFormData = new FormData();
-      uiFormData.append("scriptName", `${appName}-ui`);
+      uiFormData.append("scriptName", uiScriptName);
       uiFormData.append("script", uiWorkerCode);
       uiFormData.append("mainModule", "index.js");
 
@@ -494,27 +564,55 @@ export default {
         body: uiFormData,
       });
 
+      const uiResult = await uiResponse.json();
+      console.log("  - Response status:", uiResponse.status);
+      console.log("  - Response data:", JSON.stringify(uiResult, null, 2));
+
       if (!uiResponse.ok) {
-        const data = await uiResponse.json();
-        throw new Error(`UI deployment failed: ${data.error || "Unknown error"}`);
+        throw new Error(`UI deployment failed: ${uiResult.error || "Unknown error"}`);
       }
+      console.log("  ✅ UI worker deployed successfully");
+
+      // 6. Summary
+      console.log("\n========================================");
+      console.log("🎉 DEPLOYMENT COMPLETE!");
+      console.log("========================================");
+      console.log("📍 Deployment Summary:");
+      console.log("  - Namespace:", selectedNamespace);
+      console.log("  - URL-safe Namespace:", toUrlSafeNamespace(selectedNamespace));
+      console.log("  - App Name:", appName);
+      console.log("  - Database ID:", databaseId);
+      console.log("  - API Worker:", appName);
+      console.log("  - UI Worker:", uiScriptName);
+      
+      // Build URLs using universal dispatcher
+      const apiUrl = getDispatcherUrl(selectedNamespace, appName);
+      const uiUrl = getDispatcherUrl(selectedNamespace, uiScriptName);
+      
+      console.log("\n🔗 URLs (using universal dispatcher):");
+      console.log("  - Universal Dispatcher:", UNIVERSAL_DISPATCHER_URL);
+      console.log("  - API URL:", apiUrl);
+      console.log("  - UI URL:", uiUrl);
+      console.log("========================================\n");
 
       setStep("deployed");
       setRetryCount(0);
       
       if (onDeployComplete) {
         onDeployComplete({
-          workerUrl: `https://platform-dispatcher.embitious.workers.dev/${appName}`,
+          workerUrl: apiUrl,
           dbId: databaseId,
         });
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Deployment failed";
-      console.error("Deployment error:", errorMessage);
+      console.error("\n❌ DEPLOYMENT ERROR:", errorMessage);
+      console.error("Stack:", err);
       setDeployError(errorMessage);
       
       // If we haven't exceeded retries, trigger fix flow
       if (retryCount < MAX_RETRIES) {
+        console.log("🔄 Triggering auto-fix flow, retry:", retryCount + 1, "/", MAX_RETRIES);
         setStep("reviewing");
         await handleReviewAndFix(errorMessage);
       } else {
@@ -848,13 +946,40 @@ export default {
             ) : step === "deployed" ? (
               <div className="flex-1 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
                 <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium mb-1">
-                  Deployed Successfully
+                  ✅ Deployed Successfully
                 </div>
-                <p className="text-xs text-white/60 break-all">
-                  <a href={`https://platform-dispatcher.embitious.workers.dev/${spec?.appName}-ui`} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
-                    Open UI →
-                  </a>
-                </p>
+                <div className="space-y-1">
+                  <p className="text-xs text-white/60">
+                    <span className="text-white/40">Namespace:</span> <span className="text-cyan-400 font-mono">{selectedNamespace}</span>
+                  </p>
+                  <p className="text-xs text-white/60">
+                    <span className="text-white/40">API Worker:</span> <span className="text-cyan-400 font-mono">{spec?.appName}</span>
+                  </p>
+                  <p className="text-xs text-white/60">
+                    <span className="text-white/40">UI Worker:</span> <span className="text-cyan-400 font-mono">{spec?.appName}-ui</span>
+                  </p>
+                  <div className="pt-2 mt-2 border-t border-white/10 flex gap-4">
+                    <a 
+                      href={spec?.appName ? getDispatcherUrl(selectedNamespace, `${spec.appName}-ui`) : '#'} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-cyan-400 hover:underline text-xs"
+                    >
+                      Open UI →
+                    </a>
+                    <a 
+                      href={spec?.appName ? `${getDispatcherUrl(selectedNamespace, spec.appName)}/api` : '#'} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-emerald-400 hover:underline text-xs"
+                    >
+                      Test API →
+                    </a>
+                  </div>
+                  <p className="text-xs text-white/40 mt-2">
+                    Universal Dispatcher: <span className="font-mono">{UNIVERSAL_DISPATCHER_URL}</span>
+                  </p>
+                </div>
               </div>
             ) : (
               <button
