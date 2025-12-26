@@ -33,7 +33,11 @@ export async function POST(
     const body = await request.json();
     const { sql, params: sqlParams } = body;
 
+    console.log("[API /databases/query POST] Database ID:", id);
+    console.log("[API /databases/query POST] SQL:", sql?.substring(0, 100) + (sql?.length > 100 ? "..." : ""));
+
     if (!sql || typeof sql !== "string") {
+      console.error("[API /databases/query POST] Missing SQL");
       return NextResponse.json(
         { error: "SQL query is required" },
         { status: 400 }
@@ -43,39 +47,44 @@ export async function POST(
     // Validate SQL
     const validation = validateSQL(sql);
     if (!validation.valid) {
+      console.error("[API /databases/query POST] SQL validation failed:", validation.error);
       return NextResponse.json(
         { error: validation.error },
         { status: 400 }
       );
     }
 
-    const response = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database/${id}/query`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${CLOUDFLARE_API_TOKEN_D1}`,
-        },
-        body: JSON.stringify({
-          sql,
-          params: sqlParams || [],
-        }),
-      }
-    );
+    const cfApiUrl = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database/${id}/query`;
+    console.log("[API /databases/query POST] Cloudflare API URL:", cfApiUrl);
+
+    const response = await fetch(cfApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${CLOUDFLARE_API_TOKEN_D1}`,
+      },
+      body: JSON.stringify({
+        sql,
+        params: sqlParams || [],
+      }),
+    });
 
     const data = await response.json();
+    console.log("[API /databases/query POST] Response status:", response.status);
+    console.log("[API /databases/query POST] Success:", data.success);
 
     if (!data.success) {
+      console.error("[API /databases/query POST] Query failed:", data.errors);
       return NextResponse.json(
         { error: data.errors?.[0]?.message || "Query failed" },
         { status: response.status }
       );
     }
 
+    console.log("[API /databases/query POST] ✅ Query executed successfully");
     return NextResponse.json(data.result);
   } catch (error) {
-    console.error("Error executing query:", error);
+    console.error("[API /databases/query POST] Exception:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
