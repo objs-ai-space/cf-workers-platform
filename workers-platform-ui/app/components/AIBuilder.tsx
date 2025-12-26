@@ -27,14 +27,20 @@ interface Namespace {
   namespace_name: string;
 }
 
-// Mapping of namespace names to their dispatcher URLs
-const NAMESPACE_DISPATCHER_MAP: Record<string, string> = {
-  "testing-app": "https://platform-dispatcher.embitious.workers.dev",
-  "deva test": "https://deva-dispatcher.embitious.workers.dev",
+// Universal dispatcher URL - works for ALL namespaces
+// URL Pattern: https://universal-dispatcher.embitious.workers.dev/{namespace}/{script}/...
+const UNIVERSAL_DISPATCHER_URL = "https://universal-dispatcher.embitious.workers.dev";
+
+// Convert namespace name to URL-safe format (spaces to dashes, lowercase)
+const toUrlSafeNamespace = (namespace: string): string => {
+  return namespace.toLowerCase().replace(/\s+/g, '-');
 };
 
-// Default dispatcher URL for unknown namespaces
-const DEFAULT_DISPATCHER_URL = "https://deva-dispatcher.embitious.workers.dev";
+// Build dispatcher URL for a specific namespace and script
+const getDispatcherUrl = (namespace: string, scriptName: string): string => {
+  const urlSafeNamespace = toUrlSafeNamespace(namespace);
+  return `${UNIVERSAL_DISPATCHER_URL}/${urlSafeNamespace}/${scriptName}`;
+};
 
 interface AppSpec {
   appName: string;
@@ -279,9 +285,8 @@ export default function AIBuilder({ namespaces, onDeployComplete }: AIBuilderPro
         throw new Error("Failed to analyze request. Please try rephrasing.");
       }
 
-      const dispatcherUrl = NAMESPACE_DISPATCHER_MAP[selectedNamespace] || DEFAULT_DISPATCHER_URL;
-      const apiBaseUrl = `${dispatcherUrl}/${parsedSpec.appName}`;
-      console.log("Using dispatcher URL:", dispatcherUrl);
+      const apiBaseUrl = getDispatcherUrl(selectedNamespace, parsedSpec.appName);
+      console.log("Using universal dispatcher URL:", apiBaseUrl);
 
       // Step 2: Generate Schema FIRST (foundation)
       setStep("schema");
@@ -574,18 +579,18 @@ export default {
       console.log("========================================");
       console.log("📍 Deployment Summary:");
       console.log("  - Namespace:", selectedNamespace);
+      console.log("  - URL-safe Namespace:", toUrlSafeNamespace(selectedNamespace));
       console.log("  - App Name:", appName);
       console.log("  - Database ID:", databaseId);
       console.log("  - API Worker:", appName);
       console.log("  - UI Worker:", uiScriptName);
       
-      // Get the correct dispatcher URL for this namespace
-      const deployDispatcherUrl = NAMESPACE_DISPATCHER_MAP[selectedNamespace] || DEFAULT_DISPATCHER_URL;
-      const apiUrl = `${deployDispatcherUrl}/${appName}`;
-      const uiUrl = `${deployDispatcherUrl}/${uiScriptName}`;
+      // Build URLs using universal dispatcher
+      const apiUrl = getDispatcherUrl(selectedNamespace, appName);
+      const uiUrl = getDispatcherUrl(selectedNamespace, uiScriptName);
       
-      console.log("\n🔗 Expected URLs (using dispatcher for namespace '" + selectedNamespace + "'):");
-      console.log("  - Dispatcher:", deployDispatcherUrl);
+      console.log("\n🔗 URLs (using universal dispatcher):");
+      console.log("  - Universal Dispatcher:", UNIVERSAL_DISPATCHER_URL);
       console.log("  - API URL:", apiUrl);
       console.log("  - UI URL:", uiUrl);
       console.log("========================================\n");
@@ -948,9 +953,6 @@ export default {
                     <span className="text-white/40">Namespace:</span> <span className="text-cyan-400 font-mono">{selectedNamespace}</span>
                   </p>
                   <p className="text-xs text-white/60">
-                    <span className="text-white/40">Dispatcher:</span> <span className="text-cyan-400 font-mono">{NAMESPACE_DISPATCHER_MAP[selectedNamespace] || DEFAULT_DISPATCHER_URL}</span>
-                  </p>
-                  <p className="text-xs text-white/60">
                     <span className="text-white/40">API Worker:</span> <span className="text-cyan-400 font-mono">{spec?.appName}</span>
                   </p>
                   <p className="text-xs text-white/60">
@@ -958,7 +960,7 @@ export default {
                   </p>
                   <div className="pt-2 mt-2 border-t border-white/10 flex gap-4">
                     <a 
-                      href={`${NAMESPACE_DISPATCHER_MAP[selectedNamespace] || DEFAULT_DISPATCHER_URL}/${spec?.appName}-ui`} 
+                      href={spec?.appName ? getDispatcherUrl(selectedNamespace, `${spec.appName}-ui`) : '#'} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="text-cyan-400 hover:underline text-xs"
@@ -966,7 +968,7 @@ export default {
                       Open UI →
                     </a>
                     <a 
-                      href={`${NAMESPACE_DISPATCHER_MAP[selectedNamespace] || DEFAULT_DISPATCHER_URL}/${spec?.appName}/api`} 
+                      href={spec?.appName ? `${getDispatcherUrl(selectedNamespace, spec.appName)}/api` : '#'} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="text-emerald-400 hover:underline text-xs"
@@ -974,11 +976,9 @@ export default {
                       Test API →
                     </a>
                   </div>
-                  {!NAMESPACE_DISPATCHER_MAP[selectedNamespace] && (
-                    <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-yellow-400 text-xs">
-                      ⚠️ No dispatcher configured for namespace &quot;{selectedNamespace}&quot;. Using default dispatcher. You may need to create one.
-                    </div>
-                  )}
+                  <p className="text-xs text-white/40 mt-2">
+                    Universal Dispatcher: <span className="font-mono">{UNIVERSAL_DISPATCHER_URL}</span>
+                  </p>
                 </div>
               </div>
             ) : (
