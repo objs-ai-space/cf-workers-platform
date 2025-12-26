@@ -34,7 +34,7 @@ Output ONLY the fixed code, no explanations.`;
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5",
-        max_tokens: 16384,
+        max_tokens: 64000,
         stream: true,
         system: systemPrompt || "You are an expert debugger. Fix the code issues and output only the corrected code.",
         messages: [{ role: "user", content: prompt }],

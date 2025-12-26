@@ -4,14 +4,14 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
 export async function POST(request: Request) {
   try {
-    const { prompt, systemPrompt, maxTokens = 8192 } = await request.json();
+    const { prompt, systemPrompt, maxTokens = 64000 } = await request.json();
 
     if (!prompt) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
     }
 
-    // Cap max tokens to model limit (claude-haiku-4-5 supports up to 8192 output tokens)
-    const cappedMaxTokens = Math.min(maxTokens, 8192);
+    // Cap max tokens to model limit
+    const cappedMaxTokens = Math.min(maxTokens, 64000);
     console.log(`AI Generate: maxTokens requested=${maxTokens}, capped=${cappedMaxTokens}`);
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {

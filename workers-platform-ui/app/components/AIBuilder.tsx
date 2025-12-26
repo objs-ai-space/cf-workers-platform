@@ -159,7 +159,7 @@ export default function AIBuilder({ namespaces, onDeployComplete }: AIBuilderPro
     prompt: string,
     systemPrompt: string,
     onChunk: (text: string) => void,
-    maxTokens = 8192
+    maxTokens = 64000
   ): Promise<string> => {
     abortControllerRef.current = new AbortController();
     
@@ -214,7 +214,7 @@ export default function AIBuilder({ namespaces, onDeployComplete }: AIBuilderPro
                 }
               }
             }
-          } catch (e) {
+          } catch {
             // Log parse errors for debugging
             console.debug("SSE parse skip:", line.substring(0, 100));
           }
@@ -324,7 +324,7 @@ export default function AIBuilder({ namespaces, onDeployComplete }: AIBuilderPro
           uiHTMLRef.current = cleaned;
           setUIHTML(cleaned);
         },
-        8192  // Model max output tokens
+        64000  // Model max output tokens
       );
       console.log("UI result length:", uiResult?.length);
       const finalUI = stripCodeFences(uiResult);

@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Master Pro - Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #141414;
+      --bg-tertiary: #1a1a1a;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.08);
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-muted: rgba(255, 255, 255, 0.5);
+      --accent-primary: #6366f1;
+      --accent-secondary: #ec4899;
+      --accent-tertiary: #14b8a6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .search-container {
+      flex: 1;
+      max-width: 400px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0.5;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Loading State */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      gap: 1rem;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Error State */
+    .error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+      margin: 2rem 0;
+    }
+
+    /* Post Grid */
+    .posts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .post-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .post-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-primary);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .post-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .post-status {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .post-status.published {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+    }
+
+    .post-status.draft {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+    }
+
+    .post-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .post-excerpt {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .post-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .post-author {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .post-date {
+      margin-left: auto;
+    }
+
+    /* Post Detail View */
+    .post-detail {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+      transition: all 0.2s;
+    }
+
+    .back-button:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--accent-primary);
+    }
+
+    .post-detail-header {
+      margin-bottom: 2rem;
+    }
+
+    .post-detail-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+      background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .post-detail-meta {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .author-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .author-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.25rem;
+    }
+
+    .author-details h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .author-details p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .post-featured-image {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      border-radius: 16px;
+      margin: 2rem 0;
+    }
+
+    .post-content {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 3rem;
+    }
+
+    .post-content p {
+      margin-bottom: 1.5rem;
+    }
+
+    /* Comments Section */
+    .comments-section {
+      margin-top: 3rem;
+      padding-top: 3rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .comments-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+
+    .comments-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .comment-form {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .comments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .comment-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .comment-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .comment-author {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .comment-date {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .comment-content {
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .pagination-btn {
+      padding: 0.5rem 1rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: var(--bg-secondary);
+      border-color: var(--accent-primary);
+      color: var(--text-primary);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .pagination-btn.active {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: white;
+    }
+
+    .pagination-info {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin: 0 1rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-container {
+        max-width: 100%;
+      }
+
+      .posts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .post-detail-title {
+        font-size: 1.75rem;
+      }
+
+      .container {
+        padding: 1rem;
+      }
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease-out;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="logo">📝 Task Master Pro</div>
+      <div class="search-container">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+          <circle cx="7" cy="7" r="5"/>
+          <path d="m12 12 3 3"/>
+        </svg>
+        <input 
+          type="text" 
+          class="search-input" 
+          id="searchInput" 
+          placeholder="Search posts..."
+        />
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="app">
+      <!-- Content will be dynamically loaded here -->
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://platform-dispatcher.embitious.workers.dev/task-master-pro';
+
+    // State management
+    let currentView = 'list'; // 'list' or 'post'
+    let currentPostSlug = null;
+    let currentPage = 1;
+    let currentSearch = '';
+    let postsCache = {};
+    let authorsCache = {};
+
+    // Initialize app
+    document.addEventListener('DOMContentLoaded', () => {
+      loadPosts();
+      
+      // Search functionality
+      const searchInput = document.getElementById('searchInput');
+      let searchTimeout;
+      searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          currentSearch = e.target.value;
+          currentPage = 1;
+          loadPosts();
+        }, 500);
+      });
+    });
+
+    // Load posts list
+    async function loadPosts(page = 1) {
+      const app = document.getElementById('app');
+      app.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading posts...</p></div>';
+
+      try {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: '12',
+        });
+        if (currentSearch) {
+          params.append('search', currentSearch);
+        }
+
+        const response = await fetch(`${API_BASE}/api/posts?${params}`);
+        if (!response.ok) throw new Error('Failed to load posts');
+        
+        const data = await response.json();
+        renderPostsList(data);
+      } catch (error) {
+        app.innerHTML = `<div class="error">Error loading posts: ${error.message}</div>`;
+      }
+    }
+
+    // Render posts list
+    function renderPostsList(data) {
+      const app = document.getElementById('app');
+      const { posts, pagination } = data;
+
+      if (posts.length === 0) {
+        app.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <h2>No posts found</h2>
+            <p>${currentSearch ? 'Try a different search term' : 'Be the first to create a post!'}</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '<div class="posts-grid fade-in">';
+      
+      posts.forEach(post => {
+        const date = new Date(post.published_at || post.created_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+
+        html += `
+          <div class="post-card" onclick="loadPost('${post.slug}')">
+            <div class="post-header">
+              <h2 class="post-title">${escapeHtml(post.title)}</h2>
+              <span class="post-status ${post.status}">${post.status}</span>
+            </div>
+            ${post.excerpt ? `<p class="post-excerpt">${escapeHtml(post.excerpt)}</p>` : ''}
+            <div class="post-meta">
+              <div class="post-author">
+                <span>👤</span>
+                <span>Author ${post.author_id}</span>
+              </div>
+              <div class="post-date">${date}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += '</div>';
+
+      // Add pagination
+      if (pagination.pages > 1) {
+        html += renderPagination(pagination);
+      }
+
+      app.innerHTML = html;
+      currentView = 'list';
+    }
+
+    // Render pagination
+    function renderPagination(pagination) {
+      const { page, pages } = pagination;
+      let html = '<div class="pagination">';
+
+      // Previous button
+      html += `<button class="pagination-btn" onclick="loadPosts(${page - 1})" ${page === 1 ? 'disabled' : ''}>← Previous</button>`;
+
+      // Page numbers
+      const startPage = Math.max(1, page - 2);
+      const endPage = Math.min(pages, page + 2);
+
+      if (startPage > 1) {
+        html += `<button class="pagination-btn" onclick="loadPosts(1)">1</button>`;
+        if (startPage > 2) html += '<span class="pagination-info">...</span>';
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="pagination-btn ${i === page ? 'active' : ''}" onclick="loadPosts(${i})">${i}</button>`;
+      }
+
+      if (endPage < pages) {
+        if (endPage < pages - 1) html += '<span class="pagination-info">...</span>';
+        html += `<button class="pagination-btn" onclick="loadPosts(${pages})">${pages}</button>`;
+      }
+
+      // Next button
+      html += `<button class="pagination-btn" onclick="loadPosts(${page + 1})" ${page === pages ? 'disabled' : ''}>Next →</button>`;
+      html += `<span class="pagination-info">Page ${page} of ${pages}</span>`;
+
+      html += '</div>';
+      return html;
+    }
+
+    // Load single post
+    async function loadPost(slug) {
+      const app = document.getElementById('app');
+      app.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading post...</p></div>';
+
+      try {
+        const response = await fetch(`${API_BASE}/api/posts/${slug}`);
+        if (!response.ok) throw new Error('Post not found');
+        
+        const data = await response.json();
+        renderPostDetail(data);
+        currentView = 'post';
+        currentPostSlug = slug;
+      } catch (error) {
+        app.innerHTML = `<div class="error">Error loading post: ${error.message}</div>`;
+      }
+    }
+
+    // Render post detail
+    async function renderPostDetail(data) {
+      const { post, author, comments } = data;
+      const app = document.getElementById('app');
+
+      const date = new Date(post.published_at || post.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      // Load author info if available
+      let authorInfo = '';
+      if (author) {
+        const avatarText = author.name ? author.name.charAt(0).toUpperCase() : 'A';
+        authorInfo = `
+          <div class="author-info">
+            <div class="author-avatar">${avatarText}</div>
+            <div class="author-details">
+              <h3>${escapeHtml(author.name || 'Unknown Author')}</h3>
+              ${author.bio ? `<p>${escapeHtml(author.bio)}</p>` : ''}
+            </div>
+          </div>
+        `;
+      } else {
+        authorInfo = `<div class="author-info"><span>Author ID: ${post.author_id}</span></div>`;
+      }
+
+      let html = `
+        <div class="post-detail fade-in">
+          <a href="#" class="back-button" onclick="event.preventDefault(); loadPosts();">← Back to Posts</a>
+          
+          <div class="post-detail-header">
+            <h1 class="post-detail-title">${escapeHtml(post.title)}</h1>
+            <div class="post-detail-meta">
+              ${authorInfo}
+              <div class="post-date">📅 ${date}</div>
+            </div>
+          </div>
+
+          ${post.featured_image ? `<img src="${escapeHtml(post.featured_image)}" alt="${escapeHtml(post.title)}" class="post-featured-image" />` : ''}
+
+          <div class="post-content">
+            ${formatContent(post.content)}
+          </div>
+
+          <div class="comments-section">
+            <div class="comments-header">
+              <h2 class="comments-title">Comments (${comments.length})</h2>
+            </div>
+
+            <form class="comment-form" onsubmit="submitComment(event, ${post.id})">
+              <div class="form-group">
+                <label class="form-label">Name</label>
+                <input type="text" class="form-input" name="author_name" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" name="author_email" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Comment</label>
+                <textarea class="form-textarea" name="content" required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">Post Comment</button>
+            </form>
+
+            <div class="comments-list">
+              ${comments.length > 0 ? comments.map(comment => renderComment(comment)).join('') : '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">No comments yet. Be the first to comment!</p>'}
+            </div>
+          </div>
+        </div>
+      `;
+
+      app.innerHTML = html;
+    }
+
+    // Render comment
+    function renderComment(comment) {
+      const date = new Date(comment.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      return `
+        <div class="comment-card">
+          <div class="comment-header">
+            <span class="comment-author">${escapeHtml(comment.author_name)}</span>
+            <span class="comment-date">${date}</span>
+          </div>
+          <div class="comment-content">${escapeHtml(comment.content)}</div>
+        </div>
+      `;
+    }
+
+    // Submit comment
+    async function submitComment(event, postId) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      const button = form.querySelector('button[type="submit"]');
+      
+      button.disabled = true;
+      button.textContent = 'Posting...';
+
+      try {
+        const response = await fetch(`${API_BASE}/api/posts/${postId}/comments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            author_name: formData.get('author_name'),
+            author_email: formData.get('author_email'),
+            content: formData.get('content'),
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to post comment');
+        }
+
+        // Reload post to show new comment
+        await loadPost(currentPostSlug);
+        form.reset();
+      } catch (error) {
+        alert(`Error posting comment: ${error.message}`);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Post Comment';
+      }
+    }
+
+    // Format content (simple markdown-like formatting)
+    function formatContent(content) {
+      if (!content) return '';
+      
+      // Convert line breaks to paragraphs
+      return content
+        .split('\n\n')
+        .map(para => {
+          para = para.trim();
+          if (!para) return '';
+          
+          // Bold text
+          para = para.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+          // Italic text
+          para = para.replace(/\*(.+?)\*/g, '<em>$1</em>');
+          // Links
+          para = para.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: var(--accent-primary); text-decoration: underline;">$1</a>');
+          
+          return `<p>${escapeHtml(para)}</p>`;
+        })
+        .join('');
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Make functions globally available
+    window.loadPosts = loadPosts;
+    window.loadPost = loadPost;
+    window.submitComment = submitComment;
+  </script>
+</body>
+</html>
